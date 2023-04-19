@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+    ports:
+      - "8002:8002"
+    environment:
+      DB_CONNECTION_STRING: "postgresql+psycopg2://postgres:postgres@postgres:5432/art_back"
+      DB_APPLICATION_NAME: ${DB_APPLICATION_NAME}
+      SERVICE_BASE_PATH: ${SERVICE_BASE_PATH}
+      JWT_TOKEN_EXPIRE_MINUTES: ${JWT_TOKEN_EXPIRE_MINUTES}
+      JWT_LONG_TOKEN_EXPIRE_DAYS: ${JWT_LONG_TOKEN_EXPIRE_DAYS}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+
+      DEBUG: "true"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: art_back
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - "5432:5432"
