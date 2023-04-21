@@ -8,5 +8,16 @@ services:
       DB_CONNECTION_STRING: ${DB_CONNECTION_STRING}
       DB_APPLICATION_NAME: ${DB_APPLICATION_NAME}
       SERVICE_BASE_PATH: ${SERVICE_BASE_PATH}
-      JWT_TOKEN_EXPIRE_MINUTES: ${JWT_TOKEN_EXPIRE_MINUTES}
-      JWT_LONG_TOKEN_EXPIRE_DAYS: ${JWT_LONG_TOKEN_EXPIRE_DAYS}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES}
+      JWT_REFRESH_TOKEN_EXPIRE_DAYS: ${JWT_REFRESH_TOKEN_EXPIRE_DAYS}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+  redis:
+    image: redis:6.2-alpine
+    command: redis-server --loglevel warning --requirepass ${REDIS_PASSWORD?Require redis app password REDIS_PASSWORD} --maxmemory 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"

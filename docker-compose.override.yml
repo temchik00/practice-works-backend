@@ -10,10 +10,10 @@ services:
       DB_CONNECTION_STRING: "postgresql+psycopg2://postgres:postgres@postgres:5432/art_back"
       DB_APPLICATION_NAME: ${DB_APPLICATION_NAME}
       SERVICE_BASE_PATH: ${SERVICE_BASE_PATH}
-      JWT_TOKEN_EXPIRE_MINUTES: ${JWT_TOKEN_EXPIRE_MINUTES}
-      JWT_LONG_TOKEN_EXPIRE_DAYS: ${JWT_LONG_TOKEN_EXPIRE_DAYS}
-      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
-      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES}
+      JWT_REFRESH_TOKEN_EXPIRE_DAYS: ${JWT_REFRESH_TOKEN_EXPIRE_DAYS}
+      JWT_PRIVATE_KEY: /backend/secret/jwt-key
+      JWT_PUBLIC_KEY: /backend/secret/jwt-key.pub
 
       DEBUG: "true"
     depends_on:
@@ -27,3 +27,7 @@ services:
       POSTGRES_USER: postgres
     ports:
       - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
