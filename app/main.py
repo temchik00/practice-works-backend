@@ -3,12 +3,13 @@ import json
 from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers.auth_router import router
+from app.routers.auth_router import router as auth_router
+from app.routers.user_router import router as user_router
 
 from app.exceptions import GeneralException
 from app.crud.exceptions import CrudError, ConstraintError, AlreadyExistsError
 from app.services.exceptions import (ServiceError, UnauthorizedError,
-                                     WrongCredentialsError)
+                                     WrongCredentialsError, NotFoundError)
 
 
 app = FastAPI(
@@ -23,7 +24,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
+app.include_router(auth_router)
+app.include_router(user_router)
 
 
 @app.exception_handler(AlreadyExistsError)
@@ -47,6 +49,14 @@ def crud_exception_handler(request, exc: CrudError):
     return Response(
         json.dumps({"detail": exc.public_message}),
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+    )
+
+
+@app.exception_handler(NotFoundError)
+def not_found_exception_handler(request, exc: NotFoundError):
+    return Response(
+        json.dumps({"detail": exc.public_message}),
+        status_code=status.HTTP_404_NOT_FOUND
     )
 
 

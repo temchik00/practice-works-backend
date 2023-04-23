@@ -6,7 +6,7 @@ from app.crud.exceptions import CrudError, AlreadyExistsError
 from app.database.models import User
 from app.dependencies.database import get_db
 from app.dependencies.settings import get_auth_settings
-from app.schemas.user_schemas import UserCreateSchema
+from app.schemas.user_schemas import UserCreateSchema, UserUpdateSchema
 
 
 def get_password_hash(password):
@@ -37,11 +37,42 @@ def create_user(
 ) -> User:
     try:
         passhash = get_password_hash(user_schema.password)
-        db_user = User(username=user_schema.username, passhash=passhash)
+        user_dict = user_schema.dict(
+            exclude_unset=True,
+            exclude_none=True,
+            exclude={'password'}
+        )
+        user_dict['passhash'] = passhash
+        db_user = User(**user_dict)
         db.add(db_user)
         db.commit()
     except IntegrityError as exc:
         raise AlreadyExistsError("Username already taken") from exc
+    except SQLAlchemyError as exc:
+        raise CrudError("") from exc
+
+    db.refresh(db_user)
+    return db_user
+
+
+def update_user(
+    user_schema: UserUpdateSchema,
+    db_user: User,
+    db: Session = Depends(get_db),
+) -> User:
+    user_dict = user_schema.dict(
+        exclude_unset=True,
+        exclude_none=True,
+        exclude={'password'}
+    )
+    if user_schema.password:
+        user_dict['passhash'] = get_password_hash(user_schema.password)
+    for key, value in user_dict.items():
+        if hasattr(db_user, key):
+            setattr(db_user, key, value)
+    try:
+        db.add(db_user)
+        db.commit()
     except SQLAlchemyError as exc:
         raise CrudError("") from exc
     db.refresh(db_user)

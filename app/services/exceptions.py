@@ -18,3 +18,9 @@ class WrongCredentialsError(ServiceError):
     Exception raised when specified credentials are wrong
     i.e. wrong password or expired token
     """
+
+
+class NotFoundError(ServiceError):
+    """
+    Exception raised when can't find requested entity
+    """
