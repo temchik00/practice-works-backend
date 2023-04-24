@@ -51,7 +51,7 @@ def create_token_pair(
     user: User | None = Depends(authenticate_user)
 ) -> tuple[str, str]:
     if user is None:
-        raise WrongCredentialsError("Wrong username or password")
+        raise UnauthorizedError("Wrong username or password")
     settings = get_auth_settings()
     access_data = {
         "sub": str(user.id),

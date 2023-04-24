@@ -8,13 +8,21 @@ from app.routers.user_router import router as user_router
 
 from app.exceptions import GeneralException
 from app.crud.exceptions import CrudError, ConstraintError, AlreadyExistsError
+from app.dependencies.settings import get_fastapi_settings
 from app.services.exceptions import (ServiceError, UnauthorizedError,
                                      WrongCredentialsError, NotFoundError)
 
 
+settings = get_fastapi_settings()
+
+
 app = FastAPI(
-    title="practice-works"
+    title="practice-works",
+    docs_url=f'{settings.base_path}/docs',
+    redoc_url=f'{settings.base_path}/redoc',
+    openapi_url=f'{settings.base_path}/openapi.json'
 )
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,8 +32,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router)
-app.include_router(user_router)
+app.include_router(auth_router, prefix=settings.base_path)
+app.include_router(user_router, prefix=settings.base_path)
 
 
 @app.exception_handler(AlreadyExistsError)
