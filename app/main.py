@@ -3,24 +3,23 @@ import json
 from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers.auth_router import router as auth_router
-from app.routers.user_router import router as user_router
-
-from app.exceptions import GeneralException
-from app.crud.exceptions import CrudError, ConstraintError, AlreadyExistsError
+from app.crud.exceptions import AlreadyExistsError, ConstraintError, CrudError
 from app.dependencies.settings import get_fastapi_settings
-from app.services.exceptions import (ServiceError, UnauthorizedError,
-                                     WrongCredentialsError, NotFoundError)
-
+from app.exceptions import GeneralException
+from app.routers.auth_router import router as auth_router
+from app.routers.chat_router import router as chat_router
+from app.routers.user_router import router as user_router
+from app.services.exceptions import (NotFoundError, ServiceError,
+                                     UnauthorizedError, WrongCredentialsError)
 
 settings = get_fastapi_settings()
 
 
 app = FastAPI(
     title="practice-works",
-    docs_url=f'{settings.base_path}/docs',
-    redoc_url=f'{settings.base_path}/redoc',
-    openapi_url=f'{settings.base_path}/openapi.json'
+    docs_url=f"{settings.base_path}/docs",
+    redoc_url=f"{settings.base_path}/redoc",
+    openapi_url=f"{settings.base_path}/openapi.json",
 )
 
 
@@ -33,6 +32,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix=settings.base_path)
+app.include_router(chat_router, prefix=settings.base_path)
 app.include_router(user_router, prefix=settings.base_path)
 
 
@@ -40,7 +40,7 @@ app.include_router(user_router, prefix=settings.base_path)
 def already_exists_exception_handler(request, exc: AlreadyExistsError):
     return Response(
         json.dumps({"detail": exc.public_message}),
-        status_code=status.HTTP_409_CONFLICT
+        status_code=status.HTTP_409_CONFLICT,
     )
 
 
@@ -48,7 +48,7 @@ def already_exists_exception_handler(request, exc: AlreadyExistsError):
 def constraint_exception_handler(request, exc: ConstraintError):
     return Response(
         json.dumps({"detail": exc.public_message}),
-        status_code=status.HTTP_400_BAD_REQUEST
+        status_code=status.HTTP_400_BAD_REQUEST,
     )
 
 
@@ -56,7 +56,7 @@ def constraint_exception_handler(request, exc: ConstraintError):
 def crud_exception_handler(request, exc: CrudError):
     return Response(
         json.dumps({"detail": exc.public_message}),
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 
 
@@ -64,7 +64,7 @@ def crud_exception_handler(request, exc: CrudError):
 def not_found_exception_handler(request, exc: NotFoundError):
     return Response(
         json.dumps({"detail": exc.public_message}),
-        status_code=status.HTTP_404_NOT_FOUND
+        status_code=status.HTTP_404_NOT_FOUND,
     )
 
 
@@ -72,7 +72,7 @@ def not_found_exception_handler(request, exc: NotFoundError):
 def credentials_exception_handler(request, exc: WrongCredentialsError):
     return Response(
         json.dumps({"detail": exc.public_message}),
-        status_code=status.HTTP_400_BAD_REQUEST
+        status_code=status.HTTP_400_BAD_REQUEST,
     )
 
 
@@ -80,7 +80,7 @@ def credentials_exception_handler(request, exc: WrongCredentialsError):
 def unauthorized_exception_handler(request, exc: UnauthorizedError):
     return Response(
         json.dumps({"detail": exc.public_message}),
-        status_code=status.HTTP_401_UNAUTHORIZED
+        status_code=status.HTTP_401_UNAUTHORIZED,
     )
 
 
@@ -88,7 +88,7 @@ def unauthorized_exception_handler(request, exc: UnauthorizedError):
 def service_exception_handler(request, exc: ServiceError):
     return Response(
         json.dumps({"detail": exc.public_message}),
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 
 
@@ -96,5 +96,5 @@ def service_exception_handler(request, exc: ServiceError):
 def general_exception_handler(request, exc: GeneralException):
     return Response(
         json.dumps({"detail": exc.public_message}),
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )

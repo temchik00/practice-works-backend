@@ -1,26 +1,26 @@
 from datetime import datetime, timedelta
-from fastapi import Depends, Response, Cookie
+from uuid import uuid4
+
+from fastapi import Cookie, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import ExpiredSignatureError, JWTError, jwt
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
-from uuid import uuid4
 
-from app.crud.user import get_user_by_name, get_user_by_id, create_user
+from app.crud.user import create_user, get_user_by_id, get_user_by_name
 from app.database.models import User
 from app.dependencies.auth import get_oauth_scheme
 from app.dependencies.clients import RedisTokenStorage, get_token_storage
 from app.dependencies.database import get_db
 from app.dependencies.settings import get_auth_settings
 from app.schemas.auth_schemas import Token, TokenPayload
-from app.services.exceptions import (WrongCredentialsError, UnauthorizedError,
-                                     ServiceError)
+from app.services.exceptions import (ServiceError, UnauthorizedError,
+                                     WrongCredentialsError)
 
 
 def verify_password(plain_password, hashed_password):
     return get_auth_settings().pwd_context.verify(
-        plain_password,
-        hashed_password
+        plain_password, hashed_password
     )
 
 
@@ -28,15 +28,15 @@ def create_token(token_data: TokenPayload) -> str:
     settings = get_auth_settings()
     token = jwt.encode(
         token_data,
-        settings.private_key.encode('ascii'),
-        algorithm=settings.algorithm
+        settings.private_key.encode("ascii"),
+        algorithm=settings.algorithm,
     )
     return token
 
 
 def authenticate_user(
     user_schema: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> User | None:
     if not (user := get_user_by_name(user_schema.username, db)):
         return None
@@ -48,7 +48,7 @@ def authenticate_user(
 
 
 def create_token_pair(
-    user: User | None = Depends(authenticate_user)
+    user: User | None = Depends(authenticate_user),
 ) -> tuple[str, str]:
     if user is None:
         raise UnauthorizedError("Wrong username or password")
@@ -59,9 +59,9 @@ def create_token_pair(
         "iat": datetime.utcnow(),
         "jti": str(uuid4()),
         "exp": (
-            datetime.utcnow() +
-            timedelta(minutes=settings.access_token_expire_minutes)
-        )
+            datetime.utcnow()
+            + timedelta(minutes=settings.access_token_expire_minutes)
+        ),
     }
     refresh_data = {
         "sub": str(user.id),
@@ -69,9 +69,9 @@ def create_token_pair(
         "iat": datetime.utcnow(),
         "jti": str(uuid4()),
         "exp": (
-            datetime.utcnow() +
-            timedelta(days=settings.refresh_token_expire_days)
-        )
+            datetime.utcnow()
+            + timedelta(days=settings.refresh_token_expire_days)
+        ),
     }
     access_token = create_token(access_data)
     refresh_token = create_token(refresh_data)
@@ -79,8 +79,7 @@ def create_token_pair(
 
 
 def signin_service(
-    response: Response,
-    tokens: tuple[str, str] = Depends(create_token_pair)
+    response: Response, tokens: tuple[str, str] = Depends(create_token_pair)
 ) -> Token:
     access_token, refresh_token = tokens
     response.set_cookie(key="Authorization", value=refresh_token)
@@ -88,14 +87,12 @@ def signin_service(
 
 
 def decode_token_payload(
-    token: str = Depends(get_oauth_scheme())
+    token: str = Depends(get_oauth_scheme()),
 ) -> dict[str, any]:
     settings = get_auth_settings()
     try:
         return jwt.decode(
-            token,
-            settings.public_key,
-            algorithms=[settings.algorithm]
+            token, settings.public_key, algorithms=[settings.algorithm]
         )
     except ExpiredSignatureError as exc:
         raise UnauthorizedError("Token expired") from exc
@@ -111,7 +108,7 @@ def decode_token(
 
 def is_token_not_invalidated(
     token_payload: TokenPayload = Depends(decode_token),
-    token_storage: RedisTokenStorage = Depends(get_token_storage)
+    token_storage: RedisTokenStorage = Depends(get_token_storage),
 ) -> bool:
     if token_storage.has_token(token_payload):
         raise UnauthorizedError("Token invalidated")
@@ -121,7 +118,7 @@ def is_token_not_invalidated(
 def get_current_user(
     _: bool = Depends(is_token_not_invalidated),
     token_payload: TokenPayload = Depends(decode_token),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> User:
     user_id = token_payload.sub
     username = token_payload.name
@@ -148,7 +145,7 @@ def create_tokens_from_refresh(
 
 def refresh_service(
     response: Response,
-    tokens: tuple[str, str] = Depends(create_tokens_from_refresh)
+    tokens: tuple[str, str] = Depends(create_tokens_from_refresh),
 ) -> Token:
     access_token, refresh_token = tokens
     response.set_cookie(key="Authorization", value=refresh_token)
@@ -156,8 +153,7 @@ def refresh_service(
 
 
 def signup_service(
-    response: Response,
-    user: User = Depends(create_user)
+    response: Response, user: User = Depends(create_user)
 ) -> Token:
     access_token, refresh_token = create_token_pair(user)
     response.set_cookie(key="Authorization", value=refresh_token)
@@ -166,12 +162,10 @@ def signup_service(
 
 def invalidate_access_token(
     token_payload: TokenPayload = Depends(decode_token),
-    token_storage: RedisTokenStorage = Depends(get_token_storage)
+    token_storage: RedisTokenStorage = Depends(get_token_storage),
 ) -> None:
     token_storage.add_token(token_payload)
 
 
-def logout_service(
-    _: None = Depends(invalidate_access_token)
-) -> None:
+def logout_service(_: None = Depends(invalidate_access_token)) -> None:
     return

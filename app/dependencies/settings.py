@@ -1,4 +1,5 @@
 from functools import lru_cache
+
 from app.settings import (AuthSettings, DatabaseSettings, FastApiSettings,
                           RedisSettings)
 

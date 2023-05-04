@@ -1,7 +1,8 @@
-from fastapi import Depends
 from functools import lru_cache
-from sqlalchemy.engine import create_engine, Engine
-from sqlalchemy.orm import sessionmaker, Session
+
+from fastapi import Depends
+from sqlalchemy.engine import Engine, create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.dependencies.settings import get_database_settings
 
@@ -17,11 +18,7 @@ def get_sql_alchemy_engine() -> Engine:
 
 
 def get_session_local(engine: Engine = Depends(get_sql_alchemy_engine)):
-    return sessionmaker(
-        autocommit=False,
-        autoflush=False,
-        bind=engine
-    )
+    return sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db(session_maker=Depends(get_session_local)) -> Session:

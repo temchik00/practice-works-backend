@@ -2,7 +2,7 @@ from fastapi import Depends
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.crud.exceptions import CrudError, AlreadyExistsError
+from app.crud.exceptions import AlreadyExistsError, CrudError
 from app.database.models import User
 from app.dependencies.database import get_db
 from app.dependencies.settings import get_auth_settings
@@ -14,35 +14,28 @@ def get_password_hash(password):
 
 
 def get_user_by_name(
-    username: str,
-    db: Session = Depends(get_db)
+    username: str, db: Session = Depends(get_db)
 ) -> User | None:
     if user := db.query(User).filter(User.username == username).first():
         return user
     return None
 
 
-def get_user_by_id(
-    user_id: int,
-    db: Session = Depends(get_db)
-) -> User | None:
+def get_user_by_id(user_id: int, db: Session = Depends(get_db)) -> User | None:
     if user := db.query(User).filter(User.id == user_id).first():
         return user
     return None
 
 
 def create_user(
-    user_schema: UserCreateSchema,
-    db: Session = Depends(get_db)
+    user_schema: UserCreateSchema, db: Session = Depends(get_db)
 ) -> User:
     try:
         passhash = get_password_hash(user_schema.password)
         user_dict = user_schema.dict(
-            exclude_unset=True,
-            exclude_none=True,
-            exclude={'password'}
+            exclude_unset=True, exclude_none=True, exclude={"password"}
         )
-        user_dict['passhash'] = passhash
+        user_dict["passhash"] = passhash
         db_user = User(**user_dict)
         db.add(db_user)
         db.commit()
@@ -61,12 +54,10 @@ def update_user(
     db: Session = Depends(get_db),
 ) -> User:
     user_dict = user_schema.dict(
-        exclude_unset=True,
-        exclude_none=True,
-        exclude={'password'}
+        exclude_unset=True, exclude_none=True, exclude={"password"}
     )
     if user_schema.password:
-        user_dict['passhash'] = get_password_hash(user_schema.password)
+        user_dict["passhash"] = get_password_hash(user_schema.password)
     for key, value in user_dict.items():
         if hasattr(db_user, key):
             setattr(db_user, key, value)

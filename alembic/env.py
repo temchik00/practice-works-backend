@@ -1,7 +1,6 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from app.database.models import Base
@@ -11,8 +10,7 @@ from app.dependencies.settings import get_database_settings
 # access to the values within the .ini file in use.
 config = context.config
 config.set_main_option(
-    "sqlalchemy.url",
-    get_database_settings().connection_string
+    "sqlalchemy.url", get_database_settings().connection_string
 )
 
 # Interpret the config file for Python logging.

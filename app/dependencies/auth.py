@@ -1,5 +1,6 @@
-from fastapi.security import OAuth2PasswordBearer
 from functools import lru_cache
+
+from fastapi.security import OAuth2PasswordBearer
 
 from app.dependencies.settings import get_fastapi_settings
 
