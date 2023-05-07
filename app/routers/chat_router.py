@@ -42,7 +42,7 @@ def get_chat_users(
     summary="Отправка сообщения в чат",
     status_code=status.HTTP_201_CREATED,
 )
-def create_message(
+async def create_message(
     message: MessageGetSchema = Depends(create_message_service),
 ):
     return message

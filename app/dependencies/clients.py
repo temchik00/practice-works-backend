@@ -1,11 +1,14 @@
+import json
 from calendar import timegm
 from datetime import datetime
 from functools import lru_cache
 
+from fastapi import WebSocket
 from redis import Redis
 
 from app.dependencies.settings import get_redis_settings
 from app.schemas.auth_schemas import TokenPayload
+from app.schemas.message_schemas import MessageGetSchema
 
 
 @lru_cache()
@@ -36,3 +39,49 @@ class RedisTokenStorage:
 @lru_cache()
 def get_token_storage() -> RedisTokenStorage:
     return RedisTokenStorage()
+
+
+class BaseWebsocketManager:
+    connections: list[WebSocket]
+
+    def __init__(self):
+        self.connections = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.connections.append(websocket)
+
+    async def broadcast(self, data: str):
+        for connection in self.connections:
+            await connection.send_text(data)
+
+    def remove(self, websocket: WebSocket):
+        if websocket in self.connections:
+            self.connections.remove(websocket)
+
+
+class ChatSocketsManager:
+    managers: dict[int, BaseWebsocketManager]
+
+    def __init__(self):
+        self.managers = {}
+
+    async def add_user(self, websocket: WebSocket, chat_id: int):
+        if chat_id not in self.managers:
+            self.managers[chat_id] = BaseWebsocketManager()
+        await self.managers[chat_id].connect(websocket)
+
+    def remove_user(self, websocket: WebSocket, chat_id: int):
+        if chat_id not in self.managers:
+            return
+        self.managers[chat_id].remove(websocket)
+        if len(self.managers[chat_id].connections) == 0:
+            del self.managers[chat_id]
+
+    async def send_message(self, chat_id: int, message: MessageGetSchema):
+        if chat_id not in self.managers:
+            return
+        msg_dict = message.dict()
+        msg_dict["date_send"] = str(msg_dict["date_send"])
+        msg_str = json.dumps(msg_dict)
+        await self.managers[chat_id].broadcast(msg_str)

@@ -30,11 +30,13 @@ def get_messages(
     start: Optional[int] = None,
     db: Session = Depends(get_db),
 ) -> Iterable[Message]:
-    query = db.query(Message).filter(Message.chat_id == chat_id)
+    query = (
+        db.query(Message)
+        .filter(Message.chat_id == chat_id)
+        .order_by(Message.id.desc())
+    )
     if start:
-        query = query.order_by(Message.id.asc()).filter(Message.id >= start)
-    else:
-        query = query.order_by(Message.id.desc())
+        query = query.filter(Message.id < start)
     query = query.limit(page_size)
     res = query.all()
-    return res if start is not None else res[::-1]
+    return res[::-1]
