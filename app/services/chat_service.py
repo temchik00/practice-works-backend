@@ -20,7 +20,7 @@ def create_chat_service(
     db: Session = Depends(get_db),
 ) -> ChatGetSchema:
     chat = create_chat(chat_schema, db)
-    add_user_to_chat(AddUserSchema(user_id=user.id, chat_id=chat.id), db)
+    add_user_to_chat(chat.id, AddUserSchema(user_id=user.id), db)
     return ChatGetSchema.from_orm(chat)
 
 
