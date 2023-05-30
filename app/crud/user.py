@@ -1,4 +1,7 @@
+from typing import Iterable
+
 from fastapi import Depends
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -68,3 +71,15 @@ def update_user(
         raise CrudError("") from exc
     db.refresh(db_user)
     return db_user
+
+
+def search_user(
+    match: str | None = None, db: Session = Depends(get_db)
+) -> Iterable[User]:
+    query = db.query(User)
+    if match:
+        query = query.filter(
+            func.lower(User.username).contains(func.lower(match))
+        )
+
+    return query.order_by(User.id).all()

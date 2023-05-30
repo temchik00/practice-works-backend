@@ -1,7 +1,9 @@
+from typing import Iterable
+
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from app.crud.user import get_user_by_id, update_user
+from app.crud.user import get_user_by_id, search_user, update_user
 from app.database.models import User
 from app.dependencies.database import get_db
 from app.schemas.user_schemas import UserGetSchema, UserUpdateSchema
@@ -28,3 +30,9 @@ def update_user_service(
 ) -> UserGetSchema:
     user = update_user(user_schema, user, db)
     return UserGetSchema.from_orm(user)
+
+
+def search_user_service(
+    users: Iterable[User] = Depends(search_user),
+) -> Iterable[UserGetSchema]:
+    return (UserGetSchema.from_orm(user) for user in users)
