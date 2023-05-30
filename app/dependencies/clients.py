@@ -1,3 +1,4 @@
+import asyncio
 import json
 from calendar import timegm
 from datetime import datetime
@@ -52,8 +53,9 @@ class BaseWebsocketManager:
         self.connections.append(websocket)
 
     async def broadcast(self, data: str):
-        for connection in self.connections:
-            await connection.send_text(data)
+        await asyncio.gather(
+            *[connection.send_text(data) for connection in self.connections]
+        )
 
     def remove(self, websocket: WebSocket):
         if websocket in self.connections:
