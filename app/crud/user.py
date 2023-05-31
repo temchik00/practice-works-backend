@@ -74,7 +74,9 @@ def update_user(
 
 
 def search_user(
-    match: str | None = None, db: Session = Depends(get_db)
+    match: str | None = None,
+    limit: int = 5,
+    db: Session = Depends(get_db)
 ) -> Iterable[User]:
     query = db.query(User)
     if match:
@@ -82,4 +84,4 @@ def search_user(
             func.lower(User.username).contains(func.lower(match))
         )
 
-    return query.order_by(User.id).all()
+    return query.order_by(User.id).limit(limit).all()
